@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "infernovisuals",
+  "version": "${version}",
+  "name": "InfernoVisuals",
+  "description": "Black-red visual HUD client module set for Fabric 1.21.4",
+  "authors": [
+    "Codex"
+  ],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.infernovisuals.InfernoVisualsClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "mixins": [
+    "infernovisuals.mixins.json"
+  ]
+}
