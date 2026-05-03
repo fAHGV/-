@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIQUID AI</title>
+  <style>
+    :root {
+      --bg-top: #0f1729;
+      --bg-bottom: #041120;
+      --glass: rgba(255, 255, 255, 0.12);
+      --glass-strong: rgba(255, 255, 255, 0.2);
+      --stroke: rgba(255, 255, 255, 0.35);
+      --text: #f3f8ff;
+      --muted: #b7c6df;
+      --accent: #7ad9ff;
+      --accent-2: #a48dff;
+      --ok: #7fffd4;
+      --danger: #ff8ba7;
+      --shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+      --radius-xl: 28px;
+      --radius-l: 20px;
+      --radius-m: 14px;
+      --blur: blur(22px) saturate(150%);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 15% 15%, #193764 0%, transparent 32%),
+        radial-gradient(circle at 82% 8%, #302563 0%, transparent 28%),
+        linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+      overflow: hidden;
+    }
+
+    .ambient {
+      position: fixed;
+      inset: -20vmax;
+      background: radial-gradient(circle, rgba(122, 217, 255, 0.18), transparent 38%),
+                  radial-gradient(circle at 70% 30%, rgba(164, 141, 255, 0.15), transparent 40%);
+      filter: blur(100px);
+      animation: drift 22s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(-4%, -2%, 0) scale(1); }
+      to { transform: translate3d(4%, 2%, 0) scale(1.08); }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      height: min(860px, 95vh);
+      border-radius: 34px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+      backdrop-filter: var(--blur);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      overflow: hidden;
+      transform: translateZ(0);
+    }
+
+    .sidebar {
+      border-right: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03));
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-l);
+      background: var(--glass);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .orb {
+      width: 34px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: conic-gradient(from 120deg, var(--accent), var(--accent-2), var(--accent));
+      box-shadow: 0 0 32px rgba(122, 217, 255, 0.55);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); filter: saturate(110%); }
+      50% { transform: scale(1.08); filter: saturate(140%); }
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 0.78rem; }
+
+    .cards {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      padding: 12px;
+      border-radius: var(--radius-m);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .card .label { color: var(--muted); font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    .card .value { margin-top: 6px; font-size: 1.05rem; }
+
+    .status-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      background: var(--ok);
+      box-shadow: 0 0 14px var(--ok);
+    }
+
+    .suggestions {
+      margin-top: auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .chip {
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.83rem;
+      transition: 240ms ease;
+      cursor: pointer;
+    }
+
+    .chip:hover { background: rgba(255,255,255,0.16); transform: translateY(-1px); }
+
+    .chat {
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-l);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .topbar .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .topbar .sub { color: var(--muted); font-size: 0.85rem; }
+
+    .messages {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      gap: 11px;
+      align-content: start;
+      padding-right: 6px;
+    }
+
+    .msg {
+      max-width: min(76%, 700px);
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(8px);
+      animation: appear 320ms ease forwards;
+      line-height: 1.45;
+    }
+
+    @keyframes appear {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.user {
+      margin-left: auto;
+      background: linear-gradient(160deg, rgba(122, 217, 255, 0.34), rgba(122, 217, 255, 0.18));
+    }
+
+    .msg.ai {
+      background: linear-gradient(160deg, rgba(255,255,255,0.2), rgba(255,255,255,0.09));
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 10px;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(255,255,255,0.24);
+      background: rgba(255,255,255,0.1);
+    }
+
+    input {
+      width: 100%;
+      border: none;
+      outline: none;
+      border-radius: 999px;
+      padding: 13px 16px;
+      color: var(--text);
+      background: rgba(255,255,255,0.12);
+      font-size: 0.95rem;
+    }
+
+    input::placeholder { color: #d4e2f7bb; }
+
+    .send {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 16px;
+      color: #061324;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #7ad9ff, #a48dff);
+      transition: transform 190ms ease, box-shadow 190ms ease;
+      box-shadow: 0 8px 18px rgba(122, 217, 255, 0.35);
+    }
+
+    .send:hover { transform: translateY(-1px); }
+
+    .typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .typing span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      animation: dots 1000ms infinite ease-in-out;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 120ms; }
+    .typing span:nth-child(3) { animation-delay: 240ms; }
+
+    @keyframes dots {
+      0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+      40% { opacity: 1; transform: translateY(-3px); }
+    }
+
+    @media (max-width: 940px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient"></div>
+  <main class="app">
+    <section class="shell" role="application" aria-label="LIQUID AI интерфейс">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="orb" aria-hidden="true"></div>
+          <div>
+            <h1>LIQUID AI</h1>
+            <p>iOS 26 • Liquid Glass</p>
+          </div>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="label">Статус модели</div>
+            <div class="value"><span class="status-dot"></span>Онлайн и обучается</div>
+          </article>
+          <article class="card">
+            <div class="label">Стиль</div>
+            <div class="value">Vibe Coding Assistant</div>
+          </article>
+          <article class="card">
+            <div class="label">Скорость</div>
+            <div class="value">~ 90 ток/сек</div>
+          </article>
+        </div>
+
+        <div class="suggestions">
+          <button class="chip" data-prompt="Собери архитектуру для React + FastAPI MVP">React + FastAPI MVP</button>
+          <button class="chip" data-prompt="Сгенерируй плавную hero-анимацию в стиле liquid glass">Hero liquid animation</button>
+          <button class="chip" data-prompt="Оптимизируй этот код под readability и перформанс">Code refactor</button>
+        </div>
+      </aside>
+
+      <section class="chat">
+        <header class="topbar">
+          <div>
+            <div class="title">LIQUID AI / Нейросеть для вайбкодинга</div>
+            <div class="sub">Мягкие анимации • стеклянный UI • фокус на продуктивность</div>
+          </div>
+        </header>
+
+        <div class="messages" id="messages"></div>
+
+        <form class="composer" id="composer">
+          <input id="prompt" autocomplete="off" placeholder="Напиши задачу: например, 'Сделай красивый onboarding flow...'" />
+          <button class="send" type="submit">Отправить</button>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const messages = document.getElementById('messages');
+    const composer = document.getElementById('composer');
+    const promptInput = document.getElementById('prompt');
+    const chips = document.querySelectorAll('.chip');
+
+    const knowledge = {
+      react: 'Для React-проекта: начни с feature-based структуры, выдели UI-kit, data-layer и hooks. Добавь lazy-loading и skeleton states.',
+      fastapi: 'FastAPI: используй pydantic-схемы, роутеры по доменам, async SQLAlchemy, alembic и health-check endpoint /health.',
+      animation: 'Для плавной анимации: cubic-bezier(0.22, 0.61, 0.36, 1), длительность 260–420ms, без резких spring-перелетов.',
+      refactor: 'Refactor-правило: сначала читаемость (small pure functions), потом измерения (profiling), потом целевой фикс bottleneck-ов.',
+      default: 'Я могу помочь с архитектурой, UI, генерацией кода, ревью и оптимизацией. Дай цель, стек и ограничения проекта.'
+    };
+
+    function tokenize(text) {
+      return text.toLowerCase().replace(/[^a-zа-я0-9\s]/gi, ' ').split(/\s+/).filter(Boolean);
+    }
+
+    function score(inputTokens, answerTokens) {
+      let matches = 0;
+      for (const token of inputTokens) {
+        if (answerTokens.includes(token)) matches += 1;
+      }
+      return matches / Math.max(1, inputTokens.length);
+    }
+
+    function tinyNeuralRouter(text) {
+      const input = tokenize(text);
+      const options = [
+        { key: 'react', tokens: tokenize('react frontend component hooks state vite') },
+        { key: 'fastapi', tokens: tokenize('fastapi backend python api endpoint auth db') },
+        { key: 'animation', tokens: tokenize('animation motion easing smooth glass liquid ui') },
+        { key: 'refactor', tokens: tokenize('refactor optimize clean architecture performance bug') }
+      ];
+
+      let best = { key: 'default', value: 0 };
+      for (const option of options) {
+        const value = score(input, option.tokens);
+        if (value > best.value) best = { key: option.key, value };
+      }
+      return knowledge[best.key] || knowledge.default;
+    }
+
+    function addMessage(role, text) {
+      const node = document.createElement('article');
+      node.className = `msg ${role}`;
+      node.textContent = text;
+      messages.appendChild(node);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function addTyping() {
+      const node = document.createElement('article');
+      node.className = 'msg ai';
+      node.id = 'typing';
+      node.innerHTML = '<div class="typing">LIQUID AI думает <span></span><span></span><span></span></div>';
+      messages.appendChild(node);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function removeTyping() {
+      const typing = document.getElementById('typing');
+      if (typing) typing.remove();
+    }
+
+    function send(text) {
+      const value = text.trim();
+      if (!value) return;
+      addMessage('user', value);
+      addTyping();
+      const response = tinyNeuralRouter(value);
+      setTimeout(() => {
+        removeTyping();
+        addMessage('ai', response);
+      }, 700);
+    }
+
+    composer.addEventListener('submit', (event) => {
+      event.preventDefault();
+      send(promptInput.value);
+      promptInput.value = '';
+      promptInput.focus();
+    });
+
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        send(chip.dataset.prompt || chip.textContent);
+      });
+    });
+
+    addMessage('ai', 'Привет! Я LIQUID AI. Опиши идею, и я предложу архитектуру, UI и кодовые шаги в стиле vibe coding.');
+  </script>
+</body>
+</html>
